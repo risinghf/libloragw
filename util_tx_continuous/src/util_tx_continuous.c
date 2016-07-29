@@ -59,6 +59,8 @@ Maintainer: Matthieu Leurent
 #define DEFAULT_FDEV_KHZ        25
 #define DEFAULT_BT              2
 
+#define DEFAULT_IQ              (-100000)
+
 /* -------------------------------------------------------------------------- */
 /* --- GLOBAL VARIABLES ----------------------------------------------------- */
 
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
     unsigned int arg_u;
+    int arg_d;
     float arg_f;
     char arg_s[64];
 
@@ -113,6 +116,7 @@ int main(int argc, char **argv)
     uint8_t bt = DEFAULT_BT;
 
     int32_t offset_i, offset_q;
+    int32_t iii = DEFAULT_IQ, qqq = DEFAULT_IQ;
 
     /* RF configuration (TX fail if RF chain is not enabled) */
     enum lgw_radio_type_e radio_type = LGW_RADIO_TYPE_SX1257;
@@ -123,7 +127,7 @@ int main(int argc, char **argv)
 
 
     /* Parse command line options */
-    while ((i = getopt_long (argc, argv, "hud::f:r:", long_options, &option_index)) != -1) {
+    while ((i = getopt_long (argc, argv, "hud::f:r:i:q:", long_options, &option_index)) != -1) {
         switch (i) {
             case 'h':
                 printf("~~~ Library version string~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -136,6 +140,8 @@ int main(int argc, char **argv)
                 printf(" --mix  <uint>   Radio Tx mixer gain trim, [0:15]\n");
                 printf("                   15 corresponds to maximum gain, 1 LSB corresponds to 2dB step\n");
                 printf(" --pa   <uint>   PA gain trim, [0:3]\n");
+                printf(" -i     <int>    TX OFFSET I\n");
+                printf(" -q     <int>    TX OFFSET Q\n");
                 printf(" --mod  <char>   Modulation type ['LORA','FSK','CW']\n");
                 printf(" --sf   <uint>   LoRa Spreading Factor, [7:12]\n");
                 printf(" --bw   <uint>   LoRa bandwidth in kHz, [125,250,500]\n");
@@ -280,6 +286,30 @@ int main(int argc, char **argv)
             }
             break;
 
+        case 'i':
+            i = sscanf(optarg, "%d", &arg_d);
+            if(i != 1){
+                return EXIT_FAILURE;
+            }
+            if( (arg_d > 127) || (arg_d < -128) ){
+                printf("I Offset error\n");
+                return EXIT_FAILURE;
+            }
+            iii = arg_d;
+            break;
+
+        case 'q':
+            i = sscanf(optarg, "%d", &arg_d);
+            if(i != 1){
+                return EXIT_FAILURE;
+            }
+            if( (arg_d > 127) || (arg_d < -128) ){
+                printf("Q Offset error\n");
+                return EXIT_FAILURE;
+            }
+            qqq = arg_d;
+            break;
+
         default:
             printf("ERROR: argument parsing options. Use -h to print help\n");
             return EXIT_FAILURE;
@@ -377,6 +407,12 @@ int main(int argc, char **argv)
         lgw_reg_w(LGW_SIG_GEN_EN, 1);
         lgw_reg_w(LGW_TX_OFFSET_I, 0);
         lgw_reg_w(LGW_TX_OFFSET_Q, 0);
+    }
+
+    if( (iii != DEFAULT_IQ) && (qqq != DEFAULT_IQ) ){
+        printf("TX I/Q offset rewrite\n");
+        lgw_reg_w(LGW_TX_OFFSET_I, iii);
+        lgw_reg_w(LGW_TX_OFFSET_Q, qqq);
     }
 
     /* Send packet */
