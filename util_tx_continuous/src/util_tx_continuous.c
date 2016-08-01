@@ -409,14 +409,15 @@ int main(int argc, char **argv)
         lgw_reg_w(LGW_TX_OFFSET_Q, 0);
     }
 
+    /* Send packet */
+    i = lgw_send(txpkt);
+
+
     if( (iii != DEFAULT_IQ) && (qqq != DEFAULT_IQ) ){
-        printf("TX I/Q offset rewrite\n");
+        printf("TX I/Q offset rewrite I: %d, Q: %d\n", iii, qqq);
         lgw_reg_w(LGW_TX_OFFSET_I, iii);
         lgw_reg_w(LGW_TX_OFFSET_Q, qqq);
     }
-
-    /* Send packet */
-    i = lgw_send(txpkt);
 
     /* Recap all settings */
     printf("SX1301 library version: %s\n", lgw_version_info());
